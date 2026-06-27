@@ -60,7 +60,7 @@ class CenteredNotes extends Module
         
             if (state.currentSong.songName == "blazin")
             {
-                trace("The current song (Blazin)'s middlescroll mechanic forces centered notes.")
+                trace("The current song (Blazin)'s middlescroll mechanic forces centered notes.");
                 return;
             }
 
