@@ -19,6 +19,8 @@ class CenteredNotes extends Module
     var isNotesCentered:Bool;
     var isJudgementsHidden:Bool;
     var isUnderlay:Bool;
+    var init:Bool;
+    var isPlayState:Bool;
 
     function new():Void
     {
@@ -47,7 +49,49 @@ class CenteredNotes extends Module
      
     override function onStateChangeEnd(event:StateChangeScriptEvent):Void
     {
-        var isOptions:Bool = Std.isOfType(event.targetState, OptionsState);
+        var isOptions:Bool = Std.isOfType(event.targetState, OptionsState);        
+        isPlayState = Std.isOfType(FlxG.state, PlayState);
+       
+        if (!isPlayState)
+        {
+            init = false;
+        }
+
+        if (isPlayState && !init)
+        {
+            if (isUnderlay)
+            {
+                createBlackUnderlay();
+            }
+
+            if (isJudgementsHidden)
+            {
+                // Remove judgements
+                PlayState.instance.comboPopUps.visible = false;
+            }
+
+            if (isNotesCentered)
+            {
+                var state = PlayState.instance;
+            
+                if (state.currentSong.songName == "blazin")
+                {
+                    trace("The current song (Blazin)'s middlescroll mechanic forces centered notes.");
+                    return;
+                }
+
+                if (state != null)
+                {
+                    hideHealthBar();
+                    hideOpponentStrumline();
+                    centerPlayerStrumline();
+                }
+        
+                editJudgements();
+            }
+
+            init = true;
+        }
 
         if (isOptions)
         {
@@ -71,7 +115,6 @@ class CenteredNotes extends Module
                 isUnderlay = value;
             }, options.underlay);
         }
-        
         else
         {
             Save.instance.modOptions.set("tureen.centerednotes", options);
@@ -81,40 +124,6 @@ class CenteredNotes extends Module
         super.onStateChangeEnd(event);
     }
 
-    override function onCountdownStart(e:CountdownStartEvent)
-    {
-        if (isJudgementsHidden)
-        {
-            // Remove judgements
-            PlayState.instance.comboPopUps.visible = false;
-        }
-
-        if (isNotesCentered)
-        {
-            var state = PlayState.instance;
-        
-            if (state.currentSong.songName == "blazin")
-            {
-                trace("The current song (Blazin)'s middlescroll mechanic forces centered notes.");
-                return;
-            }
-
-            if (state != null)
-            {
-                hideHealthBar();
-                hideOpponentStrumline();
-                centerPlayerStrumline();
-            }
-    
-            editJudgements();
-        }
-
-        if (isUnderlay)
-        {
-            createBlackUnderlay();
-        }
-    }
-
     function editJudgements()
     {
         PlayState.instance.comboPopUps.offsets = [415, -40];
@@ -122,15 +131,13 @@ class CenteredNotes extends Module
 
     function createBlackUnderlay()
     {
-        var underlay = new FunkinSprite(0, 0);
-        underlay.makeSolidColor(FlxG.width, FlxG.height, 0x32FFFFFF);
-
-        underlay.scrollFactor.set(0, 0);
+        var underlay = new FlxSprite(0, 0);
+        underlay.makeGraphic(FlxG.width, FlxG.height, 0x32FFFFFF);
         underlay.cameras = [PlayState.instance.camHUD];
-
-        underlay.zIndex = -999999;
-
-        PlayState.instance.add(underlay);
+        underlay.zIndex = 0;
+        
+        PlayState.instance.add(underlay, 0);
+        PlayState.instance.refresh();
     }
 
     function hideOpponentStrumline()
