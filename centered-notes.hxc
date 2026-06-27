@@ -27,6 +27,13 @@ class CenteredNotes extends Module
         {
             options = Save.instance.modOptions.get("tureen.centerednotes");
         }
+        
+        if (options.notesCentered == null)
+        {
+            options.notesCentered = true;
+        }
+
+        isNotesCentered = options.notesCentered;
     }
      
     override function onStateChangeEnd(event:StateChangeScriptEvent):Void
