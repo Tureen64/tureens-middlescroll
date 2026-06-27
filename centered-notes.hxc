@@ -4,15 +4,21 @@ import funkin.play.PlayState;
 import funkin.save.Save;
 import funkin.ui.options.OptionsState;
 import funkin.mobile.input.ControlsHandler;
+import funkin.graphics.FunkinSprite;
 import flixel.FlxG;
+import flixel.FlxSprite;
 
 class CenteredNotes extends Module
 {
     var options:Dynamic = {
-        notesCentered: true
+        notesCentered: true,
+        hideJudgements: false,
+        underlay: true
     };
     
     var isNotesCentered:Bool;
+    var isJudgementsHidden:Bool;
+    var isUnderlay:Bool;
 
     function new():Void
     {
@@ -28,12 +34,15 @@ class CenteredNotes extends Module
             options = Save.instance.modOptions.get("tureen.centerednotes");
         }
         
-        if (options.notesCentered == null)
-        {
-            options.notesCentered = true;
-        }
+        options ??= {
+            notesCentered: true,
+            hideJudgements: false,
+            underlay: true
+        };
 
         isNotesCentered = options.notesCentered;
+        isJudgementsHidden = options.hideJudgements;
+        isUnderlay = options.underlay;
     }
      
     override function onStateChangeEnd(event:StateChangeScriptEvent):Void
@@ -44,12 +53,25 @@ class CenteredNotes extends Module
         {
             var prefs = event.targetState.optionsCodex.pages.get("preferences");
 
-            prefs.createPrefItemCheckbox("Centered Notes", "If enabled, note strumlines will be in the middle of the screen.", function(value)
+            prefs.createPrefItemCheckbox("Centered Notes", "When enabled, note strumlines will be in the middle of the screen.", function(value)
             {
                 options.notesCentered = value;
                 isNotesCentered = value;
             }, options.notesCentered);
+        
+            prefs.createPrefItemCheckbox("Remove Judgements", "When enabled, note combo and ratings will be removed.", function(value)
+            {
+                options.hideJudgements = value;
+                isJudgementsHidden = value;
+            }, options.hideJudgements);
+
+            prefs.createPrefItemCheckbox("Underlay", "When enabled, there will be a semi-transparent white underlay beneath the UI.", function(value)
+            {
+                options.underlay = value;
+                isUnderlay = value;
+            }, options.underlay);
         }
+        
         else
         {
             Save.instance.modOptions.set("tureen.centerednotes", options);
@@ -61,6 +83,12 @@ class CenteredNotes extends Module
 
     override function onCountdownStart(e:CountdownStartEvent)
     {
+        if (isJudgementsHidden)
+        {
+            // Remove judgements
+            PlayState.instance.comboPopUps.visible = false;
+        }
+
         if (isNotesCentered)
         {
             var state = PlayState.instance;
@@ -73,12 +101,38 @@ class CenteredNotes extends Module
 
             if (state != null)
             {
+                hideHealthBar();
                 hideOpponentStrumline();
                 centerPlayerStrumline();
             }
+    
+            editJudgements();
+        }
+
+        if (isUnderlay)
+        {
+            createBlackUnderlay();
         }
     }
-    
+
+    function editJudgements()
+    {
+        PlayState.instance.comboPopUps.offsets = [415, -40];
+    }
+
+    function createBlackUnderlay()
+    {
+        var underlay = new FunkinSprite(0, 0);
+        underlay.makeSolidColor(FlxG.width, FlxG.height, 0x32FFFFFF);
+
+        underlay.scrollFactor.set(0, 0);
+        underlay.cameras = [PlayState.instance.camHUD];
+
+        underlay.zIndex = -999999;
+
+        PlayState.instance.add(underlay);
+    }
+
     function hideOpponentStrumline()
     {
         var opponentStrumline:FlxSprite = PlayState.instance.opponentStrumline;
@@ -102,4 +156,14 @@ class CenteredNotes extends Module
         }
     }
 
+    function hideHealthBar()
+    {        
+        PlayState.instance.healthBar.visible = false;
+        PlayState.instance.healthBarBG.visible = false;
+        PlayState.instance.iconP1.visible = false;
+        PlayState.instance.iconP2.visible = false;
+        PlayState.instance.scoreText.x = (FlxG.width / 2 + PlayState.instance.playerStrumline.x / 2) - 75;
+        PlayState.instance.scoreText.y = PlayState.instance.playerStrumline.y + 75;
+        PlayState.instance.scoreText.letterSpacing = 2;
+    }
 } 
