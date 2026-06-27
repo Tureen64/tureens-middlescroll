@@ -1,0 +1,12 @@
+{
+  "title": "Tureen's Middlescroll",
+  "description": "Centered notes!",
+  "contributors": [
+    {
+        "name": "tureen"
+    }
+  ],
+  "api_version": "0.8.4",
+  "mod_version": "1.0.0",
+  "license": "MIT"
+}

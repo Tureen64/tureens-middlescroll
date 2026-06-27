@@ -1,0 +1,98 @@
+import funkin.modding.module.Module;
+import funkin.play.song.Song;
+import funkin.play.PlayState;
+import funkin.save.Save;
+import funkin.ui.options.OptionsState;
+import funkin.mobile.input.ControlsHandler;
+import flixel.FlxG;
+
+class CenteredNotes extends Module
+{
+    var options:Dynamic = {
+        notesCentered: true
+    };
+    
+    var isNotesCentered:Bool;
+
+    function new():Void
+    {
+        super("CenteredNotes");
+
+        if (Save.instance.modOptions.get("tureen.centerednotes") == null)
+        {
+            Save.instance.modOptions.set("tureen.centerednotes", options);
+            Save.instance.flush();
+        }
+        else
+        {
+            options = Save.instance.modOptions.get("tureen.centerednotes");
+        }
+    }
+     
+    override function onStateChangeEnd(event:StateChangeScriptEvent):Void
+    {
+        var isOptions:Bool = Std.isOfType(event.targetState, OptionsState);
+
+        if (isOptions)
+        {
+            var prefs = event.targetState.optionsCodex.pages.get("preferences");
+
+            prefs.createPrefItemCheckbox("Centered Notes", "If enabled, note strumlines will be in the middle of the screen.", function(value)
+            {
+                options.notesCentered = value;
+                isNotesCentered = value;
+            }, options.notesCentered);
+        }
+        else
+        {
+            Save.instance.modOptions.set("tureen.centerednotes", options);
+            Save.instance.flush();
+        }
+
+        super.onStateChangeEnd(event);
+    }
+
+    override function onCountdownStart(e:CountdownStartEvent)
+    {
+        if (isNotesCentered)
+        {
+            var state = PlayState.instance;
+        
+            if (state.currentSong.songName == "blazin")
+            {
+                trace("The current song (Blazin)'s middlescroll mechanic forces centered notes.")
+                return;
+            }
+
+            if (state != null)
+            {
+                hideOpponentStrumline();
+                centerPlayerStrumline();
+            }
+        }
+    }
+    
+    function hideOpponentStrumline()
+    {
+        var opponentStrumline:FlxSprite = PlayState.instance.opponentStrumline;
+        if (opponentStrumline != null)
+        {
+            for (arrow in opponentStrumline.members)
+            {
+                arrow.visible = false;
+            }
+        }
+    }
+    
+    function centerPlayerStrumline()
+    {
+        if (Preferences.controlsScheme == "Arrows" && !ControlsHandler.usingExternalInputDevice) return;
+
+        var playerStrumline:FlxSprite = PlayState.instance.playerStrumline;
+        if (playerStrumline != null)
+        {
+            playerStrumline.x = FlxG.width / 2 - playerStrumline.width / 2;
+        }
+    }
+
+} 
